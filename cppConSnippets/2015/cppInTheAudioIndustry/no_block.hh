@@ -1,6 +1,11 @@
+#ifndef __NO_BLOCK_HH__
+#define __NO_BLOCK_HH__
+
 #include <vector>
 #include <memory>
 #include <atomic>
+
+#include "release_pool.hh"
 
 template<typename T, T defaultT, void (*react)(T t)>
 class NoBlock {
@@ -8,13 +13,13 @@ class NoBlock {
 
 	public:
 		NoBlock() : m_running(true) {
+			m_releasePool = std::make_shared<ReleasePool>(100000);
 			m_thread = new pthread_t;
-
+			m_releasePool->start();
 		}
 
 		~NoBlock() {
 			delete m_thread;
-
 		}
 
 		void start() {
@@ -30,7 +35,7 @@ class NoBlock {
 			static ptr_t empty_ptr, ptr;
 
 			ptr = std::make_shared<T>(t);
-			m_releasePool.push_back(ptr);
+			m_releasePool->add(ptr);
 
 			while(!std::atomic_compare_exchange_weak(&reactToNext, &empty_ptr, ptr)) {
 				empty_ptr = nullptr;
@@ -67,6 +72,8 @@ class NoBlock {
 
 		std::atomic<bool> m_running;
 		ptr_t reactToNext;
-		std::vector<ptr_t> m_releasePool;
+		std::shared_ptr<ReleasePool> m_releasePool;
 		pthread_t *m_thread;
 };
+
+#endif /* __NO_BLOCK_HH__ */
