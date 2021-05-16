@@ -1,7 +1,8 @@
+#include <unistd.h>
+
 #include <iostream>
 
 #include "no_block.hh"
-
 
 using namespace std;
 
@@ -12,6 +13,7 @@ void incrCounter(int i) {
 }
 
 int main() {
+
 	NoBlock<int, 0, incrCounter> nb;
 	nb.start();
 
@@ -20,7 +22,7 @@ int main() {
 	}
 
 	nb.stop();
-	
+
 	cout << counter << endl;
 
 	return 0;
